@@ -33,7 +33,7 @@ begin{
     $ExtensionID = "ff48135e-4764-405f-8bc8-8e83ded065e3"
     $ExtensionName = "TSDriveSpace"
     $ExtensionVersion = "0.0.1"
-    $ExtensionSource = "Change Source to match your deployment distribution location"
+    $ExtensionSource = "https://github.com/binarygod/TSDriveSpace"
     $ExtensionEnabled = $true
 }
 process{
@@ -54,10 +54,17 @@ process{
     # Mock data, important to define datatype
     # UUID links data to the Computer, should be kept
     [GUID]$UUID = $ExtensionID
+    [String]$DeviceID = "C:"
+    [UInt64]$Size = 499530067968
+    [uint64]$Free = 209478905856
+    [String]$VolumeName = "Boot"
     # Add more properties as needed
 
     # Add Properties to the model, these get translated to Database Columns
-    $Model | Add-Member NoteProperty UUID $UUID
+    $Model | Add-Member NoteProperty ExtensionID $UUID
+    $Model | Add-Member NoteProperty DeviceID $DeviceID
+    $Model | Add-Member NoteProperty Free $Free
+    $Model | Add-Member NoteProperty VolumneName $VolumeName
     # Add more properties as needed
 
     # Define Tables/Models
@@ -70,7 +77,6 @@ process{
 
     # Define filters this Extension will use to trigger install on client
     $Filters = @{
-        IsDesktop = $true
     }
 
     # Optional: Define your Module here,
