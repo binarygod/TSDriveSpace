@@ -52,5 +52,6 @@ process{
     $Model | Add-Member NoteProperty Free $Free
     $Model | Add-Member NoteProperty VolumneName $VolumeName
 
-    Send-CHClientData -ExtensionID $ExtensionID -Data $Model -Table "TSDriveSpace"
+    $response = Send-CHClientData -ExtensionID $ExtensionID -Data $Model -Table "TSDriveSpace"
+    $response
 }
