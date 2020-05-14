@@ -23,21 +23,21 @@
 
 #>
 
-[cmdletbinding()]
+[cmdletbinding(SupportsShouldProcess=$True)]
 param()
 begin{
-    Import-Module ClientHealthCore
     $ExtensionID = "d3d4bf2d-fd70-4e34-bccd-16986197e0f4"
+    $ExtensionName = "TSDriveSpace"
+    $ComputerId = Get-CimInstance -ClassName Win32_ComputerSystemProduct | Select-Object -ExpandProperty UUID
 }
 process{
-    
 
     # Define Model
-    $Model = new-object PSCustomObject 
+    $Model = new-object PSCustomObject
 
     # Mock data, important to define datatype
     # UUID links data to the Computer, should be kept
-    [GUID]$UUID = "FF48135E-4764-405F-8BC8-8E83DED065E3"
+    [GUID]$UUID = $ComputerId
     # Add more properties as needed
     [String]$DeviceID = "C:"
     [UInt64]$Size = 499530067968
@@ -45,13 +45,21 @@ process{
     [String]$VolumeName = "Boot"
 
     # Add Properties to the model, these get translated to Database Columns
-    $Model | Add-Member NoteProperty UUID $UUID
+    $Model | Add-Member NoteProperty ComputerID $UUID
     # Add more properties as needed
     $Model | Add-Member NoteProperty DeviceID $DeviceID
     $Model | Add-Member NoteProperty Size $Size
-    $Model | Add-Member NoteProperty Free $Free
+    $Model | Add-Member NoteProperty Free 0
     $Model | Add-Member NoteProperty VolumneName $VolumeName
 
-    $response = Send-CHClientData -ExtensionID $ExtensionID -Data $Model -Table "TSDriveSpace"
-    $response
+    # Option with Single Tables
+    $results = $Model
+    $results
+
+    # Option with Multiple Tables
+    $results = @{
+        TSDriveSpace = $Model
+        TSSecTable = $Model
+    }
+    $results
 }
