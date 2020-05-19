@@ -24,7 +24,12 @@
 #>
 
 [cmdletbinding()]
-param()
+param(
+    [Parameter(ParameterSetName = 'Default', ValueFromPipeline = $false, ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
+    [String]$Hash,
+    [Parameter(ParameterSetName = 'Default', ValueFromPipeline = $false, ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
+    [String]$Source
+)
 begin {
 
     $ExtensionID = "d3d4bf2d-fd70-4e34-bccd-16986197e0f4"
@@ -56,7 +61,7 @@ process {
 
     # Define Tables/Models
     # Add any additional Table/Model pairs here.
-    $Models = New-Object System.Collections.ArrayList
+    $Models = New-Object Collections.Generic.List[object]
     $Models.Add(@{
             'Table' = "TSDriveSpace";
             'Model' = $Model;
@@ -86,7 +91,6 @@ process {
     #})
 
     $Schedule = @{
-
         "ScheduleType" = "ScheduledTask"
         "Trigger"      = "Time"                 # Implemented: Startup, Logon, Time   ToDo list: Event, Workstation Lock
         "IntervalType" = "Daily"                # "Daily", "Weekly", "Hourly", "Minutely"
@@ -105,9 +109,9 @@ process {
         'Id'      = $ExtensionID
         'Name'    = $ExtensionName
         'Version' = $ExtensionVersion
-        'Source'  = $ExtensionSource
+        'Source'  = $ExtensionSource # Not needed here, determined by Admin which installs the Extension (Path where client downlaods Extensions)
         'Enabled' = $ExtensionEnabled
-        'Hash'    = $Hash
+        'Hash'    = $Hash # Not needed here, used for published packaging
         'Models'  = $Models
         'Filters' = $Filters
         'Modules' = $Modules
