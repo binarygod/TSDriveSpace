@@ -1,63 +1,92 @@
 <#
 .SYNOPSIS
-
+ This file will be called from Deploy.ps1
 .DESCRIPTION
-    Drive Space Collection for Truesec Client Health Monitor
+ Collect data from something..
 .LINK
 
 .NOTES
  FileName: TSDriveSpace
  Author: Tim Davis
- Contact: binary.god@gmail.com
- Created: 2019-07-25
- Modified: 2019-07-25
+ Contact: @binarymethod
+ Created: 6/16/2020
+ Modified: 6/16/2020
 
- Version - 0.0.1 - (2019-07-25)
-
-
- TODO:
- [ ] Script Main Goal
- [ ] Script Secondary Goal
-
-.Example
+ Version - 0.0.1 - (6/16/2020)
 
 #>
 
 [cmdletbinding()]
 param(
-    [Parameter(ParameterSetName = 'Default', ValueFromPipeline = $false, ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
-    [String]$Hash,
-    [Parameter(ParameterSetName = 'Default', ValueFromPipeline = $false, ValueFromPipelineByPropertyName = $true, Mandatory = $true)]
-    [String]$Source
 )
 begin {
-
-    $ExtensionID = "d3d4bf2d-fd70-4e34-bccd-16986197e0f4"
+    $ExtensionID = "f435dfe4-0a04-4f2c-ab85-ab0b7072ef40"
     $ExtensionName = "TSDriveSpace"
     $ExtensionVersion = "0.0.1"
     $ExtensionEnabled = $true
+    $LastRun = $false
+    $LastStatus = $false
 }
 process {
 
     # Define Model
-    $Model = new-object PSCustomObject
+    # This model will be used to create the table with the right columns and datatypes in the database
+    $Model = New-Object Collections.Generic.List[object]
 
-    # Mock data, important to define datatype
-    # UUID links data to the Computer, should be kept
-    [GUID]$ComputerID = "FF48135E-4764-405F-8BC8-8E83DED065E3"
-    # Add more properties as needed
-    [String]$DeviceID = "C:"
-    [UInt64]$Size = 499530067968
-    [uint64]$Free = 209478905856
-    [String]$VolumeName = "Boot"
+    $Model.Add(@{
+            Name        = "ComputerId"
+            DataType    = [Guid].ToString()
+            Description = "Unique ID of machine running the script"
+        })
 
-    # Add Properties to the model, these get translated to Database Columns
-    $Model | Add-Member NoteProperty ComputerID $ComputerID
-    # Add more properties as needed
-    $Model | Add-Member NoteProperty DeviceID $DeviceID
-    $Model | Add-Member NoteProperty Size $Size
-    $Model | Add-Member NoteProperty Free $Free
-    $Model | Add-Member NoteProperty VolumneName $VolumeName
+    $Model.Add(@{
+            Name        = "DriveLetter"
+            DataType    = [String].ToString()
+            Description = "OS Drive Letter"
+        })
+
+    $Model.Add(@{
+            Name        = "Size"
+            DataType    = [UInt64].ToString()
+            Description = "Total drive space in bytes"
+        })
+
+    $Model.Add(@{
+            Name        = "Free"
+            DataType    = [UInt64].ToString()
+            Description = "Free drive space in bytes"
+        })
+
+    $Model.Add(@{
+            Name        = "Used"
+            DataType    = [UInt64].ToString()
+            Description = "Used drive space in bytes"
+        })
+
+    $Model.Add(@{
+            Name        = "PercentFree"
+            DataType    = [int].ToString()
+            Description = "Percent of Free Space"
+        })
+
+    $Model.Add(@{
+            Name        = "VolumeName"
+            DataType    = [string].ToString()
+            Description = "Name of Volume"
+        })
+    
+    $Model.Add(@{
+            Name        = "TypeName"
+            DataType    = [string].ToString()
+            Description = "Disk Type Name"
+        })
+
+    $Model.Add(@{
+            Name        = "TypeCode"
+            DataType    = [int].ToString()
+            Description = "Disk Type Code"
+        })
+
 
     # Define Tables/Models
     # Add any additional Table/Model pairs here.
@@ -65,23 +94,32 @@ process {
     $Models.Add(@{
             'Table' = "TSDriveSpace";
             'Model' = $Model;
-        }) | Out-Null
+        })
 
-    # Define filters this Extension will use to trigger install on client
+    # Define filters this Extension will use to trigger install on client (to see availeble filters, run ClientHealthGather extension)
     $Filters = @{
-        IsDesktop = $true
+
+        IsDellLaptop = @{
+            IsLaptop = $true
+            Make     = "Dell Inc."
+        }
+
+        IsDellTablet = @{
+            IsTablet = $true
+            Make     = "Dell Inc."
+        }
     }
 
     # Optional: Define require system Modules here
     # Plugin will auto import these modules as needed
-    $SystemModules = New-Object System.Collections.ArrayList
+    $SystemModules = New-Object Collections.Generic.List[object]
     # $SystemModules.Add("Module-Name")
 
     # Optional: Define your Module here,
     # Allows server to manage what Modules are still needed
     # Plugin will auto import all modules listed
 
-    $Modules = New-Object System.Collections.ArrayList
+    $Modules = New-Object Collections.Generic.List[object]
     #$Modules.Add(@{
     #    'ExtensionID' = "d3d4bf2d-fd70-4e34-bccd-16986197e0f4"
     #    'Name' = "TSDriveSpace";
@@ -90,36 +128,23 @@ process {
     #    'Enabled' = $true;
     #})
 
-    $Schedule = @{
-        "ScheduleType" = "ScheduledTask"
-        "Trigger"      = "Time"                 # Implemented: Startup, Logon, Time   ToDo list: Event, Workstation Lock
-        "IntervalType" = "Daily"                # "Daily", "Weekly", "Hourly", "Minutely"
-        "Interval"     = "1"                    # Every week
-        "Time"         = "10:10:10"             # "22:33:05"
-        "Executable"   = "powershell.exe"
-        "Argument"     = "-NoProfile -ExecutionPolicy Bypass -File Invoke-DriveSpace.ps1"
-        "ScheduleID"   = "ab80ccff-6215-4a9d-af58-e0f1da9d7add" # Uniqe guid
-    }
-
-    $Schedules = New-Object System.Collections.ArrayList
-    $Schedules.add($Schedule) | Out-Null
+    $Schedules = New-Object Collections.Generic.List[object]
 
     # Create Extension Object
     $Extension = @{
-        'Id'      = $ExtensionID
-        'Name'    = $ExtensionName
-        'Version' = $ExtensionVersion
-        'Source'  = $ExtensionSource # Not needed here, determined by Admin which installs the Extension (Path where client downlaods Extensions)
-        'Enabled' = $ExtensionEnabled
-        'Hash'    = $Hash # Not needed here, used for published packaging
-        'Models'  = $Models
-        'Filters' = $Filters
-        'Modules' = $Modules
-        'SystemModules' = $SystemModules
-        'Schedules'= $Schedules
+        "Id"            = $ExtensionID
+        "Name"          = $ExtensionName
+        "Version"       = $ExtensionVersion
+        "Enabled"       = $ExtensionEnabled
+        "Models"        = $Models
+        "Filters"       = $Filters
+        "Modules"       = $Modules
+        "SystemModules" = $SystemModules
+        "Schedules"     = $Schedules
+        "LastRun"       = $LastRun
+        "LastStatus"    = $LastStatus
     }
 
-    # Pass Extension object off to Pipe
+    # Pass Extension object off to Pipeline
     $Extension
 }
-
